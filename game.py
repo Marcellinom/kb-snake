@@ -1,7 +1,10 @@
-# importing libraries
+from dis import dis
+from turtle import distance
 import pygame
 import time
 import random
+from math import sqrt
+import sys
 
 snake_speed = 15
 
@@ -52,6 +55,8 @@ change_to = direction
 score = 0
 
 # displaying Score function
+
+
 def show_score(choice, color, font, size):
     # creating font object score_font
     score_font = pygame.font.SysFont(font, size)
@@ -75,13 +80,13 @@ def game_over():
 
     # creating a text surface on which text
     # will be drawn
-    game_over_surface = my_font.render('Your Score is : ' + str(score), True, red)
+    game_over_surface = my_font.render(
+        'Your Score is : ' + str(score), True, red)
 
     # create a rectangular object for the text
     # surface object
     game_over_rect = game_over_surface.get_rect()
-
-     # setting position of the text
+    # setting position of the text
     game_over_rect.midtop = (window_x / 2, window_y / 4)
 
     # blit will draw the text on screen
@@ -99,20 +104,118 @@ def game_over():
     quit()
 
 
+def calculate_distance(snake_x, snake_y):
+    return sqrt(pow(snake_x-fruit_position[0], 2) + pow(snake_y-fruit_position[1], 2))
+
+reverse_direction = {
+    'LEFT': 'RIGHT',
+    'RIGHT': 'LEFT',
+    'UP': 'DOWN',
+    'DOWN': 'UP'
+}
+
+def reverse_distance(distance, direction):
+    if direction == 'LEFT':
+        return distance + 10
+    elif direction == 'RIGHT':
+        return distance - 10
+    elif direction == 'UP':
+        return distance + 10
+    elif direction == 'DOWN':
+        return distance - 10
+
+def consider_direction():
+    lowest = (sys.maxsize, '')
+    distance = calculate_distance(snake_position[0] - 10, snake_position[1])
+    if distance < lowest[0] and fruit_position[0] <= snake_position[0]:
+        if (direction == 'RIGHT'):
+            distance = calculate_distance(snake_position[0], snake_position[1] + 10)
+            if (distance != 0):
+                lowest = (distance, 'UP') if distance <= lowest[0] else (distance, 'DOWN')    
+        else:
+            lowest = (distance, 'LEFT')
+    distance = calculate_distance(snake_position[0] + 10, snake_position[1])
+    if distance < lowest[0] and fruit_position[0] >= snake_position[0]:
+        if (direction == 'LEFT'):
+            distance = calculate_distance(snake_position[0], snake_position[1] + 10)
+            if (distance != 0):
+                lowest = (distance, 'UP') if distance <= lowest[0] else (distance, 'DOWN')   
+        else:
+            lowest = (distance, 'RIGHT')
+    distance = calculate_distance(snake_position[0], snake_position[1] - 10)
+    if distance < lowest[0] and fruit_position[1] <= snake_position[1]:
+        if (direction == 'DOWN'):
+            distance = calculate_distance(snake_position[0] - 10, snake_position[1])
+            if (distance != 0):
+                lowest = (distance, 'LEFT') if distance <= lowest[0] else (distance, 'RIGHT') 
+        else:
+            lowest = (distance, 'UP')
+    distance = calculate_distance(snake_position[0], snake_position[1] + 10)
+    if distance < lowest[0] and fruit_position[1] >= snake_position[1]:
+        if (direction == 'UP'):
+            distance = calculate_distance(snake_position[0] - 10, snake_position[1])
+            if (distance != 0):
+                lowest = (distance, 'LEFT') if distance <= lowest[0] else (distance, 'RIGHT')  
+        else:
+            lowest = (distance, 'DOWN')
+
+    # what im tryna do here
+    # check if nabrak, cari jalan laing yang aman
+    for block in snake_body[1:]:
+        if tabrakan(snake_position, block, direction):
+            print (direction, getSafeWay(snake_position, block))
+            lowest = (distance, getSafeWay(snake_position, block))
+
+    return lowest[1]
+
+def next_distance(snake_position, direction):
+    if direction == 'LEFT':
+        return snake_position[0] - 10
+    elif direction == 'RIGHT':
+        return snake_position[0] + 10
+    elif direction == 'UP':
+        return snake_position[1] - 10
+    elif direction == 'DOWN':
+        return snake_position[1] + 10
+
+def tabrakan(snake_position, block, direction):
+    if direction == 'UP':
+        return snake_position[1] - 10 == block[1] and snake_position[0] == block[0]
+    if direction == 'DOWN':
+        return snake_position[1] + 10 == block[1] and snake_position[0] == block[0]
+    if direction == 'LEFT':
+        return snake_position[0] - 10 == block[0] and snake_position[1] == block[1]
+    if direction == 'RIGHT':
+        return snake_position[0] + 10 == block[0] and snake_position[1] == block[1]
+
+def getSafeWay(snake_position, block):
+    dirs = []
+    if snake_position[1] - 10 != block[1]:
+        dirs.insert('UP')
+    if snake_position[1] + 10 != block[1]:
+        dirs.insert('DOWN')
+    if snake_position[0] - 10 != block[0]:
+        dirs.insert('LEFT')
+    if snake_position[0] + 10 != block[0]:
+        dirs.insert('RIGHT')
+    return dirs[random.randrange(0, len(dirs))]
+
 # Main Function
 while True:
 
     # handling key events
-    for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                change_to = 'UP'
-            if event.key == pygame.K_DOWN:
-                change_to = 'DOWN'
-            if event.key == pygame.K_LEFT:
-                change_to = 'LEFT'
-            if event.key == pygame.K_RIGHT:
-                change_to = 'RIGHT'
+    # for event in pygame.event.get():
+    #     if event.type == pygame.KEYDOWN:
+    #         if event.key == pygame.K_UP:
+    #             change_to = 'UP'
+    #         if event.key == pygame.K_DOWN:
+    #             change_to = 'DOWN'
+    #         if event.key == pygame.K_LEFT:
+    #             change_to = 'LEFT'
+    #         if event.key == pygame.K_RIGHT:
+    #             change_to = 'RIGHT'
+
+    change_to = consider_direction()
 
     # If two keys pressed simultaneously
     # we don't want snake to move into two directions
@@ -147,7 +250,9 @@ while True:
         snake_body.pop()
 
     if not fruit_spawn:
-        fruit_position = [random.randrange(1, (window_x // 10)) * 10, random.randrange(1, (window_y // 10)) * 10]
+        fruit_position = [random.randrange(1, (window_x // 10)) * 10,
+                          random.randrange(1, (window_y // 10)) * 10]
+
     fruit_spawn = True
     game_window.fill(black)
 

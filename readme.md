@@ -1,1 +1,1 @@
-# kb-snake
+# kb-tic tac toe

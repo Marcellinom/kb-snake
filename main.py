@@ -292,7 +292,7 @@ while True:
             pos[0], pos[1], 10, 10))
 
     # Render Fruit
-    pygame.draw.rect(game_window, white, pygame.Rect(
+    pygame.draw.rect(game_window, purple, pygame.Rect(
         fruit_position[0], fruit_position[1], 10, 10))
 
     # Game Over conditions
